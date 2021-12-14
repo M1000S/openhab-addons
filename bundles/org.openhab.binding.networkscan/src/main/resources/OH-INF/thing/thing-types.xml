@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="networkscan"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<!-- Sample Thing Type -->
+	<thing-type id="subnet">
+		<!-- Comment this in for Things which need a Bridge to function.
+			<supported-bridge-type-refs>
+			<bridge-type-ref id="networkscanBridge" />
+			</supported-bridge-type-refs>
+		-->
+
+		<label>Networkscan Subnet</label>
+		<description>The subnet is scanned</description>
+
+		<channels>
+			<channel id="activehosts" typeId="activehosts"/>
+			<channel id="counter" typeId="counter"/>
+			<channel id="hosts" typeId="hosts"/>
+		</channels>
+
+		<config-description>
+			<parameter name="hostname" type="text" required="true">
+				<context>network-address</context>
+				<label>Hostname</label>
+				<description>Hostname or IP address of the device</description>
+			</parameter>
+			<parameter name="password" type="text" required="true">
+				<context>password</context>
+				<label>Password</label>
+				<description>Passwort to access the device</description>
+			</parameter>
+			<parameter name="refreshInterval" type="integer" unit="s" min="1">
+				<label>Refresh Interval</label>
+				<description>Interval the device is polled in sec.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+
+	<!-- Sample Channel Type -->
+	<channel-type id="activehosts">
+		<item-type>String</item-type>
+		<label>Hosts String</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Active hosts CSV</description>
+	</channel-type>
+	
+	<channel-type id="counter">
+        <item-type>Number</item-type>
+        <label>Counter</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Counter</description>
+    </channel-type>
+    
+    <channel-type id="hosts">
+        <item-type>Number</item-type>
+        <label>Counter</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Counter</description>
+    </channel-type>    
+</thing:thing-descriptions>
