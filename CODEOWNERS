@@ -206,6 +206,7 @@
 /bundles/org.openhab.binding.netatmo/ @clinique @cweitkamp @lolodomo
 /bundles/org.openhab.binding.netscan/ @M1000S
 /bundles/org.openhab.binding.network/ @davidgraeff @mettke
+/bundles/org.openhab.binding.networkmap/ @M1000S
 /bundles/org.openhab.binding.networkscan/ @M1000S
 /bundles/org.openhab.binding.networkupstools/ @Hilbrand
 /bundles/org.openhab.binding.nibeheatpump/ @paulianttila
