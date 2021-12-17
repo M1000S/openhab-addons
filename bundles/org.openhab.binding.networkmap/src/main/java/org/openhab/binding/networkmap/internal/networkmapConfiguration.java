@@ -22,7 +22,8 @@ public class networkmapConfiguration {
     /**
      * Sample configuration parameters. Replace with your own.
      */
-    public String hostname;
-    public String password;
+    public String nmap;
+    public String subnet;
+    public boolean ports;
     public int refreshInterval;
 }

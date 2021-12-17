@@ -4,43 +4,71 @@
 	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
 	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
 
-	<!-- Sample Thing Type -->
-	<thing-type id="sample">
+	<!-- Subnet Thing Type -->
+	<thing-type id="subnetscan">
 		<!-- Comment this in for Things which need a Bridge to function.
 			<supported-bridge-type-refs>
 			<bridge-type-ref id="networkmapBridge" />
 			</supported-bridge-type-refs>
 		-->
 
-		<label>networkmap Binding Thing</label>
-		<description>Sample thing for networkmap Binding</description>
+		<label>Subnet Scan</label>
+		<description>Subnet scan for alive hosts and optionally for open ports.</description>
 
 		<channels>
-			<channel id="channel1" typeId="sample-channel"/>
+			<channel id="NumberOfHosts" typeId="hostnumber-channel"/>
+            <channel id="NamesOfHosts" typeId="hostname-channel"/>
+            <channel id="AddressesOfHosts" typeId="hostaddr-channel"/>
+            <channel id="PortsOfHosts" typeId="hostports-channel"/>            
 		</channels>
 
+
 		<config-description>
-			<parameter name="hostname" type="text" required="true">
+            <parameter name="nmap" type="text" required="true">
+                <context>Nmap</context>
+                <label>nmap bin location</label>
+                <default>/bin/nmap</default>
+                <description>Path to nmap binary must be provided, e.g. /bin/nmap</description>
+            </parameter>		
+			<parameter name="subnet" type="text" required="true">
 				<context>network-address</context>
-				<label>Hostname</label>
-				<description>Hostname or IP address of the device</description>
+				<label>Subnet</label>
+				<default>192.168.201.0/24</default>
+				<description>Subnet which shall be scanned e.g. 192.168.192.0/24 or 192.168.192.1-100</description>
 			</parameter>
-			<parameter name="password" type="text" required="true">
-				<context>password</context>
-				<label>Password</label>
-				<description>Passwort to access the device</description>
+			<parameter name="ports" type="boolean" required="true">
+				<context>Ports</context>
+				<label>Scan Ports</label>
+				<default>true</default>
+				<description>Switch to activate scan for open ports.</description>
 			</parameter>
-			<parameter name="refreshInterval" type="integer" unit="s" min="1">
+			<parameter name="refreshInterval" type="integer" unit="m" min="5" required="true">
 				<label>Refresh Interval</label>
-				<description>Interval the device is polled in sec.</description>
+				<default>10</default>
+				<description>Interval the subnet is scanned in minutes. Depending on number of hosts in the subnet, interval has to be increased. </description>
 			</parameter>
 		</config-description>
 	</thing-type>
 
 	<!-- Sample Channel Type -->
-	<channel-type id="sample-channel">
-		<item-type>Number:Temperature</item-type>
-		<label>Example Temperature</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-		<description>Sample channel for networkmap Binding</description>
+	<channel-type id="hostnumber-channel">
+		<item-type>Number</item-type>
+		<label>Hosts</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Number of alive hosts found in subnet scan</description>
 	</channel-type>
+    <channel-type id="hostname-channel">
+        <item-type>String</item-type>
+        <label>Host Names</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Comma seperated list of names of hosts found in the subnet (undef for hosts without name)</description>
+    </channel-type>	
+    <channel-type id="hostaddr-channel">
+        <item-type>String</item-type>
+        <label>Host Addresses</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Comma seperated list of IPv4 addresses of the hosts found in the subnet</description>
+    </channel-type>     
+    <channel-type id="hostports-channel">
+        <item-type>String</item-type>
+        <label>Host Ports</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Semicolon seperated list of comma separated lists of open ports of the hosts found in the subnet (undef for hosts without name)</description>
+    </channel-type>      
 </thing:thing-descriptions>

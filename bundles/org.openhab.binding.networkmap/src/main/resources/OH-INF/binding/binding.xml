@@ -3,7 +3,7 @@
 	xmlns:binding="https://openhab.org/schemas/binding/v1.0.0"
 	xsi:schemaLocation="https://openhab.org/schemas/binding/v1.0.0 https://openhab.org/schemas/binding-1.0.0.xsd">
 
-	<name>networkmap Binding</name>
-	<description>This is the binding for networkmap.</description>
+	<name>Networkmap Binding</name>
+	<description>This is the binding for networkmap tool (nmap).</description>
 
 </binding:binding>

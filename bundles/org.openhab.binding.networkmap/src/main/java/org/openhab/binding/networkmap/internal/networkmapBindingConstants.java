@@ -27,8 +27,11 @@ public class networkmapBindingConstants {
     private static final String BINDING_ID = "networkmap";
 
     // List of all Thing Type UIDs
-    public static final ThingTypeUID THING_TYPE_SAMPLE = new ThingTypeUID(BINDING_ID, "sample");
+    public static final ThingTypeUID THING_TYPE_SAMPLE = new ThingTypeUID(BINDING_ID, "subnetscan");
 
     // List of all Channel ids
-    public static final String CHANNEL_1 = "channel1";
+    public static final String CHANNEL_ID_NUMBER_OF_HOSTS = "NumberOfHosts";
+    public static final String CHANNEL_ID_NAMES_OF_HOSTS = "NamesOfHosts";
+    public static final String CHANNEL_ID_ADDRESSES_OF_HOSTS = "AddressesOfHosts";
+    public static final String CHANNEL_ID_PORTS_OF_HOSTS = "PortsOfHosts";
 }
