@@ -12,13 +12,19 @@
  */
 package org.openhab.binding.networkmap.internal;
 
-import static org.openhab.binding.networkmap.internal.networkmapBindingConstants.CHANNEL_ID_NUMBER_OF_HOSTS;
+import static org.openhab.binding.networkmap.internal.networkmapBindingConstants.*;
 
+import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.binding.networkmap.internal.nmapparser.NmapGrepper;
 import org.openhab.core.io.net.exec.ExecUtil;
+import org.openhab.core.library.types.DecimalType;
+import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
@@ -40,7 +46,8 @@ public class networkmapHandler extends BaseThingHandler {
 
     private final Logger logger = LoggerFactory.getLogger(networkmapHandler.class);
 
-    private @Nullable networkmapConfiguration config;
+    private networkmapConfiguration config = new networkmapConfiguration();
+    private @Nullable ScheduledFuture<?> refreshJob;
 
     public networkmapHandler(Thing thing) {
         super(thing);
@@ -60,6 +67,38 @@ public class networkmapHandler extends BaseThingHandler {
             // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
             // "Could not control device at IP address x.x.x.x");
         }
+    }
+
+    public boolean performScan() {
+        /*
+         * String cmndline = ExecUtil.executeCommandLineAndWaitResponse(Duration.ofMinutes(5), "sudo", "/bin/nmap",
+         * "-oX",
+         * "testx.xml", "192.168.201.0/24");
+         *
+         * NmapParser nmapP = new NmapParser("testx.xml");
+         */
+        String cmndline = ExecUtil.executeCommandLineAndWaitResponse(Duration.ofMinutes(5), "sudo", "/bin/nmap", "-sn",
+                "-oG", "-", config.subnet);
+
+        NmapGrepper nmapG = new NmapGrepper(cmndline);
+        logger.info("{}", nmapG.getSubHosts().getHostCount());
+        logger.info(nmapG.getSubHosts().getAllHostNameString());
+        logger.info(nmapG.getSubHosts().getAllHostAddrString());
+
+        updateState(CHANNEL_ID_NAMES_OF_HOSTS, new StringType(nmapG.getSubHosts().getAllHostNameString()));
+        updateState(CHANNEL_ID_ADDRESSES_OF_HOSTS, new StringType(nmapG.getSubHosts().getAllHostAddrString()));
+        BigDecimal decimalValue = new BigDecimal(nmapG.getHostCount());
+        updateState(CHANNEL_ID_NUMBER_OF_HOSTS, new DecimalType(decimalValue));
+
+        return true;
+    }
+
+    private void startAutomaticScan() {
+        ScheduledFuture<?> future = refreshJob;
+        if (future != null && !future.isDone()) {
+            future.cancel(true);
+        }
+        refreshJob = scheduler.scheduleWithFixedDelay(() -> performScan(), 0, 1, TimeUnit.MINUTES);
     }
 
     @Override
@@ -95,6 +134,7 @@ public class networkmapHandler extends BaseThingHandler {
             // when done do:
             if (thingReachable) {
                 updateStatus(ThingStatus.ONLINE);
+                startAutomaticScan();
             } else {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
                         "Ensure nmap is installed, path to nmap is configured correct and nmap can be sudoed without password.");
@@ -112,4 +152,16 @@ public class networkmapHandler extends BaseThingHandler {
         // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
         // "Can not access device as username and/or password are invalid");
     }
+
+    @Override
+    public void dispose() {
+        ScheduledFuture<?> future = refreshJob;
+        if (future != null) {
+            if (!future.isDone()) {
+                future.cancel(true);
+            }
+            refreshJob = null;
+        }
+    }
+
 }
