@@ -20,6 +20,9 @@
             <channel id="NamesOfHosts" typeId="hostname-channel"/>
             <channel id="AddressesOfHosts" typeId="hostaddr-channel"/>
             <channel id="PortsOfHosts" typeId="hostports-channel"/>            
+            <channel id="StateOfHosts" typeId="hoststate-channel"/>
+            <channel id="LastSeenHosts" typeId="hostseen-channel"/>
+            <channel id="LastUpdateHosts" typeId="hostupdate-channel"/>
 		</channels>
 
 
@@ -42,11 +45,30 @@
 				<default>true</default>
 				<description>Switch to activate scan for open ports.</description>
 			</parameter>
-			<parameter name="refreshInterval" type="integer" unit="m" min="5" required="true">
-				<label>Refresh Interval</label>
-				<default>10</default>
-				<description>Interval the subnet is scanned in minutes. Depending on number of hosts in the subnet, interval has to be increased. </description>
-			</parameter>
+			<parameter name="domain" type="boolean" required="true">
+                <context>Domain</context>
+                <label>Strip Local Domains</label>
+                <default>true</default>
+                <description>Switch to strip local domains from host names.</description>
+            </parameter>
+            <parameter name="refreshInterval" type="integer" unit="m" min="5" required="true">
+                <label>Refresh Interval</label>
+                <default>10</default>
+                <description>Interval the subnet is scanned in minutes. Depending on number of hosts in the subnet, interval has to be increased. </description>
+            </parameter>
+            <parameter name="overwrite" type="boolean" required="true">
+                <context>Overwrite</context>
+                <label>Use alias host names</label>
+                <default>false</default>
+                <description>Switch to overwrite host names with alias names.</description>
+            </parameter>			
+            <parameter name="alias" type="text" required="false" multiple="true">
+                <context>Aliases</context>
+                <label>Alias host names</label>
+                <multipleLimit>5</multipleLimit>
+                <description>overwrite host names by ipv4 address. One per line. Format ipv4:alias".</description>
+            </parameter>			
+
 		</config-description>
 	</thing-type>
 
@@ -70,5 +92,20 @@
         <item-type>String</item-type>
         <label>Host Ports</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
         <description>Semicolon seperated list of comma separated lists of open ports of the hosts found in the subnet (undef for hosts without name)</description>
-    </channel-type>      
+    </channel-type>
+    <channel-type id="hoststate-channel">
+        <item-type>String</item-type>
+        <label>Host States</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Semicolon seperated list with state of the hosts found in the subnet</description>
+    </channel-type>       
+    <channel-type id="hostseen-channel">
+        <item-type>String</item-type>
+        <label>Last seen active host</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Semicolon seperated list with last activity of the hosts found in the subnet</description>
+    </channel-type>    
+    <channel-type id="hostupdate-channel">
+        <item-type>String</item-type>
+        <label>Last update of state</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+        <description>Semicolon seperated list with last uodate of state of the hosts found in the subnet</description>
+    </channel-type>                   
 </thing:thing-descriptions>

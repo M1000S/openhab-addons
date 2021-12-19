@@ -34,4 +34,8 @@ public class networkmapBindingConstants {
     public static final String CHANNEL_ID_NAMES_OF_HOSTS = "NamesOfHosts";
     public static final String CHANNEL_ID_ADDRESSES_OF_HOSTS = "AddressesOfHosts";
     public static final String CHANNEL_ID_PORTS_OF_HOSTS = "PortsOfHosts";
+    public static final String CHANNEL_ID_STATE_OF_HOSTS = "StateOfHosts";
+    public static final String CHANNEL_ID_SEEN_OF_HOSTS = "LastSeenHosts";
+    public static final String CHANNEL_ID_UPDATE_OF_HOSTS = "LastUpdateHosts";
+
 }

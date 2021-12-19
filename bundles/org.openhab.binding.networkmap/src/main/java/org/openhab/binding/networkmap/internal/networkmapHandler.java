@@ -16,12 +16,14 @@ import static org.openhab.binding.networkmap.internal.networkmapBindingConstants
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.openhab.binding.networkmap.internal.nmapparser.NmapGrepper;
+import org.openhab.binding.networkmap.internal.subnet.Subnet;
 import org.openhab.core.io.net.exec.ExecUtil;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.StringType;
@@ -45,12 +47,14 @@ import org.slf4j.LoggerFactory;
 public class networkmapHandler extends BaseThingHandler {
 
     private final Logger logger = LoggerFactory.getLogger(networkmapHandler.class);
-
+    private Subnet mySubnet;
     private networkmapConfiguration config = new networkmapConfiguration();
     private @Nullable ScheduledFuture<?> refreshJob;
+    protected @Nullable ExecutorService executorService;
 
     public networkmapHandler(Thing thing) {
         super(thing);
+        mySubnet = new Subnet();
     }
 
     @Override
@@ -69,6 +73,15 @@ public class networkmapHandler extends BaseThingHandler {
         }
     }
 
+    public void performPortScan(Integer hostId) {
+        String hostAddr = mySubnet.getHost(hostId).getHostIPv4();
+        logger.info("Thread: {}", hostAddr);
+        String cmndline = ExecUtil.executeCommandLineAndWaitResponse(Duration.ofMinutes(2), "sudo", "/bin/nmap", "-oG",
+                "-", hostAddr);
+        logger.info(cmndline);
+        mySubnet.parseNmapGreppable(cmndline, 0);
+    }
+
     public boolean performScan() {
         /*
          * String cmndline = ExecUtil.executeCommandLineAndWaitResponse(Duration.ofMinutes(5), "sudo", "/bin/nmap",
@@ -77,19 +90,43 @@ public class networkmapHandler extends BaseThingHandler {
          *
          * NmapParser nmapP = new NmapParser("testx.xml");
          */
-        String cmndline = ExecUtil.executeCommandLineAndWaitResponse(Duration.ofMinutes(5), "sudo", "/bin/nmap", "-sn",
+        String cmndline = ExecUtil.executeCommandLineAndWaitResponse(Duration.ofMinutes(2), "sudo", "/bin/nmap", "-sn",
                 "-oG", "-", config.subnet);
 
-        NmapGrepper nmapG = new NmapGrepper(cmndline);
-        logger.info("{}", nmapG.getSubHosts().getHostCount());
-        logger.info(nmapG.getSubHosts().getAllHostNameString());
-        logger.info(nmapG.getSubHosts().getAllHostAddrString());
+        this.mySubnet.parseNmapGreppable(cmndline, 1);
+        logger.info("{}", mySubnet.getHostCount());
+        logger.info(mySubnet.getHostNames(config.domain));
+        logger.info(mySubnet.getHostAddresses());
 
-        updateState(CHANNEL_ID_NAMES_OF_HOSTS, new StringType(nmapG.getSubHosts().getAllHostNameString()));
-        updateState(CHANNEL_ID_ADDRESSES_OF_HOSTS, new StringType(nmapG.getSubHosts().getAllHostAddrString()));
-        BigDecimal decimalValue = new BigDecimal(nmapG.getHostCount());
+        updateState(CHANNEL_ID_NAMES_OF_HOSTS, new StringType(mySubnet.getHostNames(config.domain)));
+        updateState(CHANNEL_ID_ADDRESSES_OF_HOSTS, new StringType(mySubnet.getHostAddresses()));
+        BigDecimal decimalValue = new BigDecimal(mySubnet.getHostCount());
         updateState(CHANNEL_ID_NUMBER_OF_HOSTS, new DecimalType(decimalValue));
+        updateState(CHANNEL_ID_STATE_OF_HOSTS, new StringType(mySubnet.getHostStates()));
+        updateState(CHANNEL_ID_SEEN_OF_HOSTS, new StringType(mySubnet.getHostLastSeen()));
+        updateState(CHANNEL_ID_UPDATE_OF_HOSTS, new StringType(mySubnet.getHostLastUpdate()));
 
+        if (this.executorService == null) {
+            final ExecutorService executorService = Executors.newFixedThreadPool(mySubnet.getHostCount());
+            this.executorService = executorService;
+
+            for (int i = 0; i < mySubnet.getHostCount(); i++) {
+                Integer hostId = i;
+                executorService.execute(() -> {
+                    Thread.currentThread().setName("portscan_" + mySubnet.getHost(hostId).getHostName());
+                    performPortScan(hostId);
+                });
+            }
+            try {
+                executorService.awaitTermination(90, TimeUnit.SECONDS);
+                executorService.shutdownNow();
+                this.executorService = null;
+                logger.info("Thread terminated: {}", executorService.isTerminated());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // Reset interrupt flag
+                executorService.shutdownNow();
+            }
+        }
         return true;
     }
 
@@ -98,7 +135,8 @@ public class networkmapHandler extends BaseThingHandler {
         if (future != null && !future.isDone()) {
             future.cancel(true);
         }
-        refreshJob = scheduler.scheduleWithFixedDelay(() -> performScan(), 0, 1, TimeUnit.MINUTES);
+        refreshJob = scheduler.scheduleWithFixedDelay(() -> performScan(), 0, 5, TimeUnit.MINUTES);
+
     }
 
     @Override
@@ -120,7 +158,7 @@ public class networkmapHandler extends BaseThingHandler {
         // the framework is then able to reuse the resources from the thing handler initialization.
         // we set this upfront to reliably check status updates in unit tests.
         updateStatus(ThingStatus.UNKNOWN);
-
+        mySubnet = new Subnet();
         // Example for background initialization:
         scheduler.execute(() -> {
             boolean thingReachable = false; // <background task with long running initialization here>

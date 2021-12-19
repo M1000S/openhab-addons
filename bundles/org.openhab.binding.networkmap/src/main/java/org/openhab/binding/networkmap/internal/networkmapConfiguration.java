@@ -25,5 +25,8 @@ public class networkmapConfiguration {
     public String nmap;
     public String subnet;
     public boolean ports;
+    public boolean domain;
     public int refreshInterval;
+    public boolean overwrite;
+    public String alias;
 }
